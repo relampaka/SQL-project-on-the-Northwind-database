@@ -1,0 +1,76 @@
+In which countries has Northwind had the greatest success?
+
+USE Northwind
+Go
+
+ /* Displays information (sorted for convenience) on the 5 countries that generated the most revenue for Northwind*/
+  
+SELECT TOP 5 dbo.Customers.Country,
+ SUM (dbo.[Order Details].RevenueProduct) AS RevenueOrder
+ FROM dbo.Customers 
+ INNER JOIN dbo.Orders ON dbo.Customers.CustomerID=dbo.Orders.CustomerID
+ INNER JOIN dbo.[Order Details] ON dbo.[Order Details].OrderID = dbo.Orders.OrderID
+ WHERE YEAR (OrderDate) BETWEEN 1993 AND 1998
+ GROUP BY dbo.Customers.Country
+ --HAVING dbo.Customers.Country = 'USA' -- фильтр по стране
+ ORDER BY RevenueOrder DESC
+
+-- Top 5 countries in which the company has achieved the greatest success
+ Country    RevenueOrder
+USA	        263566,98
+Germany	    244640,63
+Austria	    139496,63
+Brazil	    114968,48
+France	    85498,76
+
+Find out the order growth rate over the last 3 years.
+
+/*Displays the number of orders grouped by year*/
+
+SELECT DATENAME(year, dbo.Orders.OrderDate ) AS YearOrder, 
+COUNT(dbo.Orders.OrderID) AS OrdersQuantity,SUM (dbo.[Order Details].RevenueProduct) AS RevenueOrders
+FROM dbo.Orders
+INNER JOIN dbo.[Order Details] ON dbo.Orders.OrderID = dbo.[Order Details].OrderID
+GROUP BY DATENAME(year, dbo.Orders.OrderDate )
+HAVING DATENAME(year, dbo.Orders.OrderDate ) BETWEEN 1996 and 1998
+
+YearOrder  OrdersQuantity    RevenueOrders
+1996	      405	             226298,50
+1997	      1059	           658388,75
+1998	      691	             469771,34
+
+-- Compared to 1997, in 1998 there was a decline in the number of orders. In 1997 there was a peak in the number of orders. This year has brought the greatest profit.
+
+
+How many product orders has each customer placed in the last year?
+
+/*Show the total number of customer orders in the last year*/
+
+SELECT dbo.Customers.CustomerID , dbo.Customers.CompanyName, 
+	COUNT(dbo.Orders.OrderID) AS OrdersQuantity,dbo.Customers.Country, SUM (dbo.[Order Details].RevenueProduct) AS RevenueOrders
+FROM dbo.Customers INNER JOIN dbo.Orders ON dbo.Customers.CustomerID=dbo.Orders.CustomerID
+INNER JOIN dbo.[Order Details] ON dbo.Orders.OrderID = dbo.[Order Details].OrderID
+WHERE   YEAR(OrderDate) = 1998
+GROUP BY DATENAME(year, dbo.Orders.OrderDate ), dbo.Customers.CustomerID , dbo.Customers.CompanyName, dbo.Customers.Country
+ORDER BY OrdersQuantity DESC
+
+
+What is the delivery status of customer orders? Update the delivery status of order 11068, as it was recently shipped to the delivery address.
+
+/*Display a list of companies, the delivery status of their order and the country of delivery*/
+
+SELECT dbo.Orders.OrderID, dbo.Customers.CompanyName, dbo.Orders.ShipCountry,
+	dbo.Orders.RequiredDate, dbo.Orders.ShippedDate,
+CASE
+	WHEN ShippedDate<=RequiredDate THEN	'Delivered in time'
+	WHEN ShippedDate IS NULL then 'Stil not delivered'
+	ELSE'Delivery delayed'
+END AS DeliveryStatus
+FROM dbo.Orders
+INNER JOIN dbo.Customers ON dbo.Orders.CustomerID = dbo.Customers.CustomerID
+ORDER BY Country, CompanyName
+
+UPDATE dbo.Orders
+SET ShippedDate = 1998-08-01
+Where OrderID = 11068
+
