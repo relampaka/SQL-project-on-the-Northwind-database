@@ -1,0 +1,30 @@
+/* Выведем количество продаж и общую сумму проданных товаров по каждому отделу */
+
+SELECT dbo.Employees.Title, COUNT(dbo.Orders.OrderID) AS Count_Order, 
+SUM(CONVERT(money, (dbo.[Order Details].UnitPrice * dbo.[Order Details].Quantity) * (1 - dbo.[Order Details].Discount) / 100) * 100) AS Revenue
+FROM   dbo.Employees INNER JOIN
+             dbo.Orders ON dbo.Employees.EmployeeID = dbo.Orders.EmployeeID INNER JOIN
+             dbo.[Order Details] ON dbo.Orders.OrderID = dbo.[Order Details].OrderID
+GROUP BY dbo.Employees.Title
+
+
+/На основе прошлого запроса, выдаим премию для каждого отдела в зависимости от выручки продаж.
+Если выручка больше 140000, то премия составляет 15% от выручки,
+если выручка,которую сделал отдел, находится в диапазоне между 120000 и 140000, то премия оставляет 10% от выручки.
+Если выручка, которую сделал отдел, меньше 120000, то отдел не получает премию */
+
+
+Количество выплаченной премии за весь преиод продажи
+
+SELECT TOP (100) PERCENT dbo.Employees.Title, COUNT(dbo.Orders.OrderID) AS Count_Order,
+SUM(CONVERT(money, (dbo.[Order Details].UnitPrice * dbo.[Order Details].Quantity) * (1 - dbo.[Order Details].Discount) / 100) * 100) AS Revenue,
+CASE
+  WHEN SUM(((UnitPrice * Quantity)* (1 - dbo.[Order Details].Discount) / 100) * 100) > 140000 
+  THEN ROUND((SUM(((UnitPrice * Quantity) * (1 - dbo.[Order Details].Discount) / 100) * 100) * 15 / 100), 2) 
+  WHEN SUM(((UnitPrice * Quantity) * (1 - dbo.[Order Details].Discount) / 100) * 100) BETWEEN 120000 AND 140000
+  THEN ROUND((SUM(((UnitPrice * Quantity) * (1 - dbo.[Order Details].Discount) / 100) * 100) * 10 / 100), 2) ELSE NULL END AS Premiums
+FROM   dbo.Employees INNER JOIN
+             dbo.Orders ON dbo.Employees.EmployeeID = dbo.Orders.EmployeeID INNER JOIN
+             dbo.[Order Details] ON dbo.Orders.OrderID = dbo.[Order Details].OrderID
+GROUP BY dbo.Employees.Title
+ORDER BY Premiums DESC
